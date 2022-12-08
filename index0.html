@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!--Basic Initilizations-->
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <!--Displaya on title bar-->
+    <title>ISRO</title>
+    <!--Icon on title bar-->
+    <link rel='Shortcut Icon' type='image/x-icon' href='title_logo.png'>
+    <!--Linking bootstrap css files-->
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap.min.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap-grid.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap-grid.min.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap-reboot.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='css/bootstrap-reboot.min.css'>
+    <!--Linking Bootstrap js files-->
+    <script src='js/bootstrap.bundle.js'></script>
+    <script src='js/bootstrap.bundle.min.js'></script>
+    <script src='js/bootstrap.js'></script>
+    <script src='js/bootstrap.min.js'></script>
+    <style>
+        a {
+            background-color: aqua;
+            color: blue;
+        }
+        
+        a:hover {
+            background-color: blue;
+            color: aqua;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #4caf50;
+            width: 0%;
+            border-radius: 10px;
+        }
+        
+        canvas {
+            background-color: #000;
+        }
+    </style>
+</head>
+
+<body style="background-image:url('body_background.gif');">
+    <div style="color:white; position:absolute; top:45%; left:45%;">
+        <h1>......A.......<br/>Vidhey's<br/> Creation</h1>
+    </div>
+    <canvas id="nokey" width="800" height="800">
+        Your Browser Don't Support Canvas, Please Download Chrome ^_^``
+    </canvas>
+    <script>
+        var canvas = document.getElementById('nokey'),
+            can_w = parseInt(canvas.getAttribute('width')),
+            can_h = parseInt(canvas.getAttribute('height')),
+            ctx = canvas.getContext('2d');
+
+        // console.log(typeof can_w);
+
+        var ball = {
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                r: 0,
+                alpha: 1,
+                phase: 0
+            },
+            ball_color = {
+                r: 207,
+                g: 255,
+                b: 4
+            },
+            R = 2,
+            balls = [],
+            alpha_f = 0.03,
+            alpha_phase = 0,
+
+            // Line
+            link_line_width = 0.8,
+            dis_limit = 260,
+            add_mouse_point = true,
+            mouse_in = false,
+            mouse_ball = {
+                x: 0,
+                y: 0,
+                vx: 0,
+                vy: 0,
+                r: 0,
+                type: 'mouse'
+            };
+
+        // Random speed
+        function getRandomSpeed(pos) {
+            var min = -1,
+                max = 1;
+            switch (pos) {
+                case 'top':
+                    return [randomNumFrom(min, max), randomNumFrom(0.1, max)];
+                    break;
+                case 'right':
+                    return [randomNumFrom(min, -0.1), randomNumFrom(min, max)];
+                    break;
+                case 'bottom':
+                    return [randomNumFrom(min, max), randomNumFrom(min, -0.1)];
+                    break;
+                case 'left':
+                    return [randomNumFrom(0.1, max), randomNumFrom(min, max)];
+                    break;
+                default:
+                    return;
+                    break;
+            }
+        }
+
+        function randomArrayItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function randomNumFrom(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+        console.log(randomNumFrom(0, 10));
+        // Random Ball
+        function getRandomBall() {
+            var pos = randomArrayItem(['top', 'right', 'bottom', 'left']);
+            switch (pos) {
+                case 'top':
+                    return {
+                        x: randomSidePos(can_w),
+                        y: -R,
+                        vx: getRandomSpeed('top')[0],
+                        vy: getRandomSpeed('top')[1],
+                        r: R,
+                        alpha: 1,
+                        phase: randomNumFrom(0, 10)
+                    }
+                    break;
+                case 'right':
+                    return {
+                        x: can_w + R,
+                        y: randomSidePos(can_h),
+                        vx: getRandomSpeed('right')[0],
+                        vy: getRandomSpeed('right')[1],
+                        r: R,
+                        alpha: 1,
+                        phase: randomNumFrom(0, 10)
+                    }
+                    break;
+                case 'bottom':
+                    return {
+                        x: randomSidePos(can_w),
+                        y: can_h + R,
+                        vx: getRandomSpeed('bottom')[0],
+                        vy: getRandomSpeed('bottom')[1],
+                        r: R,
+                        alpha: 1,
+                        phase: randomNumFrom(0, 10)
+                    }
+                    break;
+                case 'left':
+                    return {
+                        x: -R,
+                        y: randomSidePos(can_h),
+                        vx: getRandomSpeed('left')[0],
+                        vy: getRandomSpeed('left')[1],
+                        r: R,
+                        alpha: 1,
+                        phase: randomNumFrom(0, 10)
+                    }
+                    break;
+            }
+        }
+
+        function randomSidePos(length) {
+            return Math.ceil(Math.random() * length);
+        }
+
+        // Draw Ball
+        function renderBalls() {
+            Array.prototype.forEach.call(balls, function(b) {
+                if (!b.hasOwnProperty('type')) {
+                    ctx.fillStyle = 'rgba(' + ball_color.r + ',' + ball_color.g + ',' + ball_color.b + ',' + b.alpha + ')';
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, R, 0, Math.PI * 2, true);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Update balls
+        function updateBalls() {
+            var new_balls = [];
+            Array.prototype.forEach.call(balls, function(b) {
+                b.x += b.vx;
+                b.y += b.vy;
+
+                if (b.x > -(50) && b.x < (can_w + 50) && b.y > -(50) && b.y < (can_h + 50)) {
+                    new_balls.push(b);
+                }
+
+                // alpha change
+                b.phase += alpha_f;
+                b.alpha = Math.abs(Math.cos(b.phase));
+                // console.log(b.alpha);
+            });
+
+            balls = new_balls.slice(0);
+        }
+
+        // loop alpha
+        function loopAlphaInf() {
+
+        }
+
+        // Draw lines
+        function renderLines() {
+            var fraction, alpha;
+            for (var i = 0; i < balls.length; i++) {
+                for (var j = i + 1; j < balls.length; j++) {
+
+                    fraction = getDisOf(balls[i], balls[j]) / dis_limit;
+
+                    if (fraction < 1) {
+                        alpha = (1 - fraction).toString();
+
+                        ctx.strokeStyle = 'rgba(150,150,150,' + alpha + ')';
+                        ctx.lineWidth = link_line_width;
+
+                        ctx.beginPath();
+                        ctx.moveTo(balls[i].x, balls[i].y);
+                        ctx.lineTo(balls[j].x, balls[j].y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // calculate distance between two points
+        function getDisOf(b1, b2) {
+            var delta_x = Math.abs(b1.x - b2.x),
+                delta_y = Math.abs(b1.y - b2.y);
+
+            return Math.sqrt(delta_x * delta_x + delta_y * delta_y);
+        }
+
+        // add balls if there a little balls
+        function addBallIfy() {
+            if (balls.length < 20) {
+                balls.push(getRandomBall());
+            }
+        }
+
+        // Render
+        function render() {
+            ctx.clearRect(0, 0, can_w, can_h);
+
+            renderBalls();
+
+            renderLines();
+
+            updateBalls();
+
+            addBallIfy();
+
+            window.requestAnimationFrame(render);
+        }
+
+        // Init Balls
+        function initBalls(num) {
+            for (var i = 1; i <= num; i++) {
+                balls.push({
+                    x: randomSidePos(can_w),
+                    y: randomSidePos(can_h),
+                    vx: getRandomSpeed('top')[0],
+                    vy: getRandomSpeed('top')[1],
+                    r: R,
+                    alpha: 1,
+                    phase: randomNumFrom(0, 10)
+                });
+            }
+        }
+        // Init Canvas
+        function initCanvas() {
+            canvas.setAttribute('width', window.innerWidth);
+            canvas.setAttribute('height', window.innerHeight);
+
+            can_w = parseInt(canvas.getAttribute('width'));
+            can_h = parseInt(canvas.getAttribute('height'));
+        }
+        window.addEventListener('resize', function(e) {
+            console.log('Window Resize...');
+            initCanvas();
+        });
+
+        function goMovie() {
+            initCanvas();
+            initBalls(30);
+            window.requestAnimationFrame(render);
+        }
+        goMovie();
+
+        // Mouse effect
+        canvas.addEventListener('mouseenter', function() {
+            console.log('mouseenter');
+            mouse_in = true;
+            balls.push(mouse_ball);
+        });
+        canvas.addEventListener('mouseleave', function() {
+            console.log('mouseleave');
+            mouse_in = false;
+            var new_balls = [];
+            Array.prototype.forEach.call(balls, function(b) {
+                if (!b.hasOwnProperty('type')) {
+                    new_balls.push(b);
+                }
+            });
+            balls = new_balls.slice(0);
+        });
+        canvas.addEventListener('mousemove', function(e) {
+            var e = e || window.event;
+            mouse_ball.x = e.pageX;
+            mouse_ball.y = e.pageY;
+            // console.log(mouse_ball);
+        });
+    </script>
+    <div>
+        <header style="background-image:url('nav_background.gif'); border-bottom-left-radius:20px; border-bottom-right-radius:20px ;" class="header sticky-top border-white border-bottom">
+            <nav id="navbar-example2" class="navbar">
+                <img src="navbar_logo.png" style="height:65px; width:90px; ">
+                <ul class="nav nav-pills">
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Home">Home</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#About">About</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Services">Services</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Contact">Contact</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Login">Login</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="progress-container">
+                <div class="progress-bar" id="myBar"></div>
+            </div>
+        </header>
+
+        <div data-spy="scroll" data-target="#navbar-example2" data-offset="0">
+            <section class="container-fluid  mt-5 mb-5 pt-4" id="Home">
+                <center>
+                    <img src=" home.png " style="border-radius: 10px; text-align: center; " class="img-responsive img-fluid " />
+                </center>
+            </section>
+            <div class="row text-center mb-5">
+                <div class="col-2"></div>
+                <div class="col-3">
+                    <div class="card" id="About">
+                        <img src="about.png" class="card-img-top" alt="img not found..!" style="height:250px; width:355px;" class="img-responsive img-fluid " />
+                        <div class="card-body" style="background-image: url('about.jpg');">
+                            <h2 class="card-title"><u>ABOUT</u></h2>
+                            <p class="card-text">India decided to go to space when Indian National Committee for Space Research (INCOSPAR) was set up by the Government of India in 1962. With the visionary Dr Vikram Sarabhai at its helm, INCOSPAR set up the Thumba Equatorial
+                                Rocket Launching Station (TERLS) in Thiruvananthapuram for upper atmospheric research. Indian Space Research Organisation, formed in 1969, superseded the erstwhile INCOSPAR. Vikram Sarabhai, having identified the role and
+                                importance of space technology in a Nation's development, provided by ISRO.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2"></div>
+                <div class="col-3">
+                    <div class="card" id="Services">
+                        <img src="services.png" class="card-img-top" alt="img not found..!" style="height:250px; width:355px;" class="img-responsive img-fluid " />
+                        <div class="card-body" style="background-image: url('services.jpg');">
+                            <h2 class="card-title"><u>SERVICES</u></h2>
+                            <p class="card-text">In today's world the technological assets that you have invested in and nurtured could well be the central power-house that drives your corporate activities towards their goals. Naturally you want these assets to yield their
+                                full potential. Consultancy Services from ISRO can contribute significantly to your efforts to maximize the returns from your technological assets. ISRO is pleased to offer this experience and expertise to the Indian industrial
+                                and technological sectors by way of Technological Consultancy Services.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2"></div>
+            </div>
+            <div class="row text-center mb-5">
+                <div class="col-2"></div>
+                <div class="col-3">
+                    <div class="card" id="Contact">
+                        <div class="card-body" style="background-image: url('contact.jpg');">
+                            <h2 class="card-title"><u>CONTACT</u></h2>
+                            <pre class="card-text">Chairman cum Managing Director
+    ANTRIX Corporation Ltd.
+    Antariksh Bhavan, New BEL Road
+    Bengaluru-560 231 
+    Phone:+9180 22178302
+    Fax: 080 22178337
+    EMail: cmd@antrix.gov.in
+    Website: www.antrix.gov.in
+                                
+    Web Information Manager
+    Director, Office of Media and Public Relations (OMPR), ISRO Hqs
+    Antariksh Bhavan, New BEL Road
+    Bengaluru-560 231
+    Phone:+91 80 23415275 or 22172296
+    Fax: +91 80 23412253
+    Email: isropr@isro.gov.in
+    </pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2"></div>
+                <div class="col-3">
+                    <div class="card">
+                        <div class="card-body" style="background-image: url('location.jpg');">
+                            <h2 class="card-title"><u>LOCATION</u></h2>
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d244141.57137232504!2d78.04875091640625!3d17.037788500000005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcbcc1d642d2631%3A0x8125e2e94ce9b87a!2sISRO%20Center%20Shadnagar!5e0!3m2!1sen!2sin!4v1600596639010!5m2!1sen!2sin"
+                                width="300" height="396" frameborder="0" style="border:0;" allowfullscreen="" aria-hidden="false" tabindex="0" class="img-responsive img-fluid "></iframe>
+                        </div>
+                    </div>
+                    <div class="card mt-5">
+                        <div class="card-body" style="background-image: url('login.jpg');">
+                            <h2 class="card-title" id="Login"><u>LOGIN</u></h2>
+                            <table border="0">
+                                <tr>
+                                    <td>User-Id</td>
+                                    <td><input type="text" placeholder="Enter User-Id here"></td>
+                                </tr>
+                                <tr>
+                                    <td>Password</td>
+                                    <td><input type="password"></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <button style="border-radius: 10px; background-color: aqua;" onclick="alert('OOPS,THIS MODULE IS UNDER CONSTRUCTION..!')">Submit</button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-2"></div>
+            </div>
+
+        </div>
+        <footer style="background-image:url('nav_background.gif'); border-top-left-radius:20px; border-top-right-radius:20px ;" class="footer sticky-top border-white border-top">
+            <nav id="navbar-example2" class="navbar">
+                <img src="navbar_logo.png" style="height:65px; width:90px; ">
+                <ul class="nav nav-pills">
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Home">Home</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#About">About</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Services">Services</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Contact">Contact</a>
+                    </li>
+                    <li class="nav-item pl-1">
+                        <a class="nav-link" href="#Login">Login</a>
+                    </li>
+                </ul>
+            </nav>
+        </footer>
+    </div>
+    <script>
+        // When the user scrolls the page, execute myFunction 
+        window.onscroll = function() {
+            myFunction()
+        };
+
+        function myFunction() {
+            var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var scrolled = (winScroll / height) * 100;
+            document.getElementById("myBar").style.width = scrolled + "%";
+        }
+    </script>
+
+</body>
+
+</html>
